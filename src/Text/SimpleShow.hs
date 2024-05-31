@@ -3,7 +3,7 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
-module Main where
+module Text.SimpleShow where
 
 import GHC.Generics
 
@@ -12,9 +12,9 @@ tests = do
   let person = Person "Alice" 30 [1,2,3]
   let shape1 = Circle 5.0
   let shape2 = ShapePerson person
-  putStrLn $ gshow person  -- Output: "Person Alice, 30"
-  putStrLn $ gshow shape1  -- Output: "Circle 5.0"
-  putStrLn $ gshow shape2  -- Output: "Rectangle 4.0, 6.0"
+  putStrLn $ gshow person
+  putStrLn $ gshow shape1
+  putStrLn $ gshow shape2
 
 parens :: Bool -> String -> String
 parens True x = "(" ++ x ++ ")"
@@ -80,8 +80,9 @@ instance (GShow' f) => GShow' (M1 D c f) where
   gshow' (M1 x) = gshow' x
 
 instance (GShow' f, Constructor c, GIsApplied f) => GShow' (M1 C c f) where
-  gshow' m@(M1 x) = parens (gIsApplied x) $
-    conName m ++ " " ++ gshow' x
+  gshow' m@(M1 x)
+    | gIsApplied x = parens True $ conName m ++ " " ++ gshow' x
+    | otherwise = conName m
 
 instance (GShow' f, Selector s) => GShow' (M1 S s f) where
   -- Ignore selector names
@@ -108,9 +109,8 @@ instance GShow Double where
 instance (GShow a, GShow b) => GShow (a, b) where
   gshow (a, b) = "(" ++ gshow a ++ ", " ++ gshow b ++ ")"
 
--- instance GShow a => GShow [a] where
---   gshow = show
---
+instance GShow a => GShow [a]
+
 data Person = Person { name :: String, age :: Int, ints :: [Int]}
   deriving (Generic)
 
@@ -121,4 +121,3 @@ data Shape = Circle Double | ShapePerson Person
 
 instance GShow Shape
 
-instance GShow a => GShow [a]
